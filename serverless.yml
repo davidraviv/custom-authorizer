@@ -1,0 +1,35 @@
+service: custom-authorizer
+
+plugins:
+  - serverless-localstack
+
+custom:
+  localstack:
+    host: http://localhost  # optional - LocalStack host to connect to
+    edgePort: 4566  # optional - LocalStack edge port to connect to
+    endpoints:
+      APIGateway: ${self:custom.localstack.host}:4566
+      Lambda: ${self:custom.localstack.host}:4566
+
+frameworkVersion: '2.62.0'
+
+provider:
+  name: aws
+  runtime: python3.8
+  lambdaHashingVersion: 20201221
+
+functions:
+  create-user:
+    handler: user_handlers.create_user
+    memorySize: 128
+    description: create a User
+    events:
+      - http:
+          authorizer: auth-by-vendor-jwt
+          method: post
+          path: /user
+          cors: true
+  auth-by-vendor-jwt:
+    handler: auth_by_vendor_jwt.handler
+    memorySize: 128
+    description: Authenticate caller by jwt
